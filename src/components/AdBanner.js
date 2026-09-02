@@ -7,7 +7,21 @@ export default function AdBanner() {
   const [canRequestAds, setCanRequestAds] = useState(false);
 
   useEffect(() => {
-    AdsConsent.getConsentInfo().then(info => setCanRequestAds(info.canRequestAds)).catch(() => setCanRequestAds(false));
+    let mounted = true;
+
+    const checkConsent = async () => {
+      try {
+        const info = await AdsConsent.getConsentInfo();
+        if (mounted) setCanRequestAds(info.canRequestAds === true);
+      } catch (error) {
+        console.warn('[AdBanner] consent check failed', error);
+      }
+    };
+
+    checkConsent();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   if (!canRequestAds) return null;
@@ -17,11 +31,17 @@ export default function AdBanner() {
       <BannerAd
         unitId={AD_UNIT_IDS.banner}
         size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-        requestOptions={{ requestNonPersonalizedAdsOnly: false }}
+        onAdLoaded={() => console.log('[AdBanner] loaded')}
         onAdFailedToLoad={err => console.warn('[AdBanner] failed to load', err)}
       />
     </View>
   );
 }
 
-const styles = StyleSheet.create({ container: { width: '100%', alignItems: 'center', justifyContent: 'center' } });
+const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
