@@ -9,7 +9,6 @@
 - 🏆 **Best Score & Best Level** — your personal records are saved locally.
 - ▶️ **Quick Play** — start a new run directly from the home screen.
 - ⚙️ **Settings** — access app settings from the home screen.
-- 📢 **Google AdMob** — production banner, interstitial, and rewarded ads.
 - 🔐 **Consent handling** — Google Mobile Ads consent flow is integrated before ad initialization where required.
 - 📱 **Android APK support** — the EAS production profile is configured to generate an APK.
 
@@ -20,16 +19,6 @@
 3. Find and tap the numbers in order: **1 → 2 → 3 → …**.
 4. Complete the round as quickly as possible.
 5. Continue through levels and try to improve your score.
-
-## 📢 Advertising
-
-The app uses Google Mobile Ads with separate production ad units for:
-
-- Banner ads
-- Interstitial ads
-- Rewarded ads
-
-The banner is displayed at the **top of the home screen**.
 
 ## 🛠️ Tech Stack
 
@@ -50,12 +39,12 @@ The banner is displayed at the **top of the home screen**.
 ├── eas.json
 ├── package.json
 └── src/
-    ├── components/    # Reusable UI components such as ads
+    ├── components/    # Reusable UI components
     ├── context/       # Game state and providers
     ├── navigation/    # App navigation
     ├── screens/       # Home, game, settings, and other screens
     ├── theme/         # Colors and visual theme
-    └── utils/         # Ads, consent, storage, and game utilities
+    └── utils/          # Consent, storage, and game utilities
 ```
 
 ## 🚀 Development
@@ -85,10 +74,6 @@ For an internal preview APK:
 ```bash
 eas build -p android --profile preview
 ```
-
-## 🔐 Ad & Privacy Notes
-
-Production advertising depends on the Google AdMob account, app status, ad-unit serving status, consent requirements, network availability, and Google's ad-serving systems. Correct application code and ad-unit IDs do not guarantee that a live ad will be returned for every request.
 
 ## 📄 License
 
