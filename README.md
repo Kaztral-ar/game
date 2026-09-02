@@ -77,4 +77,4 @@ eas build -p android --profile preview
 
 ## 📄 License
 
-No license has been specified for this repository yet.
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for the full license text.
