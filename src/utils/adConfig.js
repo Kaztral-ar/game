@@ -1,10 +1,9 @@
 import { TestIds } from 'react-native-google-mobile-ads';
 
 // Production AdMob configuration.
-// The supplied ad unit is configured as the banner unit.
 const PRODUCTION_IDS = {
   banner: 'ca-app-pub-6906509746436244/2220867988',
-  interstitial: '',
+  interstitial: 'ca-app-pub-6906509746436244/9574895195',
   rewarded: '',
 };
 
