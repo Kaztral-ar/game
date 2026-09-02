@@ -7,6 +7,9 @@ const PRODUCTION_IDS = {
   rewarded: 'ca-app-pub-6906509746436244/6948731857',
 };
 
+// Show an interstitial after every 3 completed levels.
+export const INTERSTITIAL_LEVEL_INTERVAL = 3;
+
 export const AD_UNIT_IDS = __DEV__
   ? {
       banner: TestIds.BANNER,
