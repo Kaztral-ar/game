@@ -12,6 +12,11 @@
     "ios": {
       "bundleIdentifier": "com.kaztral.numberrush"
     },
+    "extra": {
+      "eas": {
+        "projectId": "332e9574-94e6-4894-a2b4-f054039d744c"
+      }
+    },
     "plugins": [
       [
         "react-native-google-mobile-ads",
