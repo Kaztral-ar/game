@@ -1,1 +1,24 @@
-{"expo":{"name":"Number Rush","slug":"number-rush","version":"1.0.0","orientation":"portrait","userInterfaceStyle":"automatic","assetBundlePatterns":["**/*"],"android":{"package":"com.kaztral.numberrush"},"ios":{"bundleIdentifier":"com.kaztral.numberrush"},"plugins":["react-native-google-mobile-ads"]}}
+{
+  "expo": {
+    "name": "Number Rush",
+    "slug": "number-rush",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": ["**/*"],
+    "android": {
+      "package": "com.kaztral.numberrush"
+    },
+    "ios": {
+      "bundleIdentifier": "com.kaztral.numberrush"
+    },
+    "plugins": [
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-6906509746436244~8981717455"
+        }
+      ]
+    ]
+  }
+}
