@@ -1,4 +1,8 @@
 {
+  "cli": {
+    "version": ">= 16.18.0",
+    "appVersionSource": "remote"
+  },
   "build": {
     "development": {
       "developmentClient": true,
@@ -9,6 +13,7 @@
     },
     "production": {
       "distribution": "store",
+      "autoIncrement": true,
       "android": {
         "image": "latest"
       }
