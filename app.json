@@ -16,7 +16,16 @@
       [
         "react-native-google-mobile-ads",
         {
-          "androidAppId": "ca-app-pub-6906509746436244~8981717455"
+          "androidAppId": "ca-app-pub-6906509746436244~8981717455",
+          "delayAppMeasurementInit": true
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "extraProguardRules": "-keep class com.google.android.gms.internal.consent_sdk.** { *; }"
+          }
         }
       ]
     ]
