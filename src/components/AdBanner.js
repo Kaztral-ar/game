@@ -1,26 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import { AD_UNIT_IDS } from '../utils/adConfig';
-import { getAdsReady } from '../utils/consent';
 
 export default function AdBanner() {
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    let mounted = true;
-
-    getAdsReady().then(canRequestAds => {
-      if (mounted) setReady(canRequestAds);
-    });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  if (!ready) return null;
-
   return (
     <View style={styles.container}>
       <BannerAd
