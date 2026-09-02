@@ -1,6 +1,27 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
+import { AdsConsent, BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import { AD_UNIT_IDS } from '../utils/adConfig';
-export default function AdBanner() { return <View style={styles.container}><BannerAd unitId={AD_UNIT_IDS.banner} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} requestOptions={{ requestNonPersonalizedAdsOnly:false }} onAdFailedToLoad={(err)=>console.warn('[AdBanner] failed to load',err)} /></View>; }
-const styles=StyleSheet.create({container:{width:'100%',alignItems:'center',justifyContent:'center'}});
+
+export default function AdBanner() {
+  const [canRequestAds, setCanRequestAds] = useState(false);
+
+  useEffect(() => {
+    AdsConsent.getConsentInfo().then(info => setCanRequestAds(info.canRequestAds)).catch(() => setCanRequestAds(false));
+  }, []);
+
+  if (!canRequestAds) return null;
+
+  return (
+    <View style={styles.container}>
+      <BannerAd
+        unitId={AD_UNIT_IDS.banner}
+        size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+        requestOptions={{ requestNonPersonalizedAdsOnly: false }}
+        onAdFailedToLoad={err => console.warn('[AdBanner] failed to load', err)}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({ container: { width: '100%', alignItems: 'center', justifyContent: 'center' } });
