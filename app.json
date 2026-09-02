@@ -7,6 +7,12 @@
     "userInterfaceStyle": "automatic",
     "assetBundlePatterns": ["**/*"],
     "owner": "kaztrals-team",
+    "icon": "./src/assets/icon.png",
+    "splash": {
+      "image": "./src/assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
     "android": {
       "package": "com.kaztral.numberrush"
     },
