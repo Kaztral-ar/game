@@ -6,5 +6,79 @@ import { colors, gradients } from '../theme/colors';
 import { getBestScore, getBestLevel } from '../utils/storage';
 import { useGame } from '../context/GameContext';
 import AdBanner from '../components/AdBanner';
-export default function HomeScreen({navigation}){const[bestScore,setBestScore]=useState(0),[bestLevel,setBestLevel]=useState(1);const{resetRun}=useGame();const loadBests=useCallback(async()=>{const[s,l]=await Promise.all([getBestScore(),getBestLevel()]);setBestScore(s);setBestLevel(l)},[]);useFocusEffect(useCallback(()=>{loadBests()},[loadBests]));const handlePlay=()=>{resetRun();navigation.navigate('Game')};return <LinearGradient colors={gradients.background} style={styles.flex}><SafeAreaView style={styles.flex}><View style={styles.content}><View style={styles.titleBlock}><Text style={styles.title}>Number Rush</Text><Text style={styles.subtitle}>Tap 1 → 2 → 3 … as fast as you can</Text></View><View style={styles.statsRow}><View style={styles.statCard}><Text style={styles.statLabel}>Best Score</Text><Text style={styles.statValue}>{bestScore}</Text></View><View style={styles.statCard}><Text style={styles.statLabel}>Best Level</Text><Text style={styles.statValue}>{bestLevel}</Text></View></View><View style={styles.buttons}><Pressable style={styles.playButton} onPress={handlePlay}><Text style={styles.playButtonText}>PLAY</Text></Pressable><Pressable style={styles.secondaryButton} onPress={()=>navigation.navigate('Settings')}><Text style={styles.secondaryButtonText}>Settings</Text></Pressable></View></View><View style={styles.adSlot}><AdBanner/></View></SafeAreaView></LinearGradient>}
-const styles=StyleSheet.create({flex:{flex:1},content:{flex:1,alignItems:'center',justifyContent:'center',paddingHorizontal:24},titleBlock:{alignItems:'center',marginBottom:48},title:{fontSize:42,fontWeight:'800',color:colors.textPrimary,letterSpacing:1},subtitle:{marginTop:8,fontSize:15,color:colors.textSecondary,textAlign:'center'},statsRow:{flexDirection:'row',gap:16,marginBottom:48},statCard:{backgroundColor:colors.surface,borderRadius:16,paddingVertical:16,paddingHorizontal:24,alignItems:'center',minWidth:130},statLabel:{color:colors.textSecondary,fontSize:13,marginBottom:4},statValue:{color:colors.accent,fontSize:26,fontWeight:'700'},buttons:{width:'100%',alignItems:'center',gap:14},playButton:{backgroundColor:colors.primary,paddingVertical:18,paddingHorizontal:64,borderRadius:32,minWidth:220,alignItems:'center'},playButtonText:{color:colors.textPrimary,fontSize:20,fontWeight:'800',letterSpacing:2},secondaryButton:{paddingVertical:12,paddingHorizontal:32},secondaryButtonText:{color:colors.textSecondary,fontSize:16,fontWeight:'600'},adSlot:{paddingBottom:8}});
+
+export default function HomeScreen({ navigation }) {
+  const [bestScore, setBestScore] = useState(0);
+  const [bestLevel, setBestLevel] = useState(1);
+  const { resetRun } = useGame();
+
+  const loadBests = useCallback(async () => {
+    const [s, l] = await Promise.all([getBestScore(), getBestLevel()]);
+    setBestScore(s);
+    setBestLevel(l);
+  }, []);
+
+  useFocusEffect(useCallback(() => {
+    loadBests();
+  }, [loadBests]));
+
+  const handlePlay = () => {
+    resetRun();
+    navigation.navigate('Game');
+  };
+
+  return (
+    <LinearGradient colors={gradients.background} style={styles.flex}>
+      <SafeAreaView style={styles.flex}>
+        <View style={styles.adSlot}>
+          <AdBanner />
+        </View>
+
+        <View style={styles.content}>
+          <View style={styles.titleBlock}>
+            <Text style={styles.title}>Number Rush</Text>
+            <Text style={styles.subtitle}>Tap 1 → 2 → 3 … as fast as you can</Text>
+          </View>
+
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <Text style={styles.statLabel}>Best Score</Text>
+              <Text style={styles.statValue}>{bestScore}</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statLabel}>Best Level</Text>
+              <Text style={styles.statValue}>{bestLevel}</Text>
+            </View>
+          </View>
+
+          <View style={styles.buttons}>
+            <Pressable style={styles.playButton} onPress={handlePlay}>
+              <Text style={styles.playButtonText}>PLAY</Text>
+            </Pressable>
+            <Pressable style={styles.secondaryButton} onPress={() => navigation.navigate('Settings')}>
+              <Text style={styles.secondaryButtonText}>Settings</Text>
+            </Pressable>
+          </View>
+        </View>
+      </SafeAreaView>
+    </LinearGradient>
+  );
+}
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  content: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
+  titleBlock: { alignItems: 'center', marginBottom: 48 },
+  title: { fontSize: 42, fontWeight: '800', color: colors.textPrimary, letterSpacing: 1 },
+  subtitle: { marginTop: 8, fontSize: 15, color: colors.textSecondary, textAlign: 'center' },
+  statsRow: { flexDirection: 'row', gap: 16, marginBottom: 48 },
+  statCard: { backgroundColor: colors.surface, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 24, alignItems: 'center', minWidth: 130 },
+  statLabel: { color: colors.textSecondary, fontSize: 13, marginBottom: 4 },
+  statValue: { color: colors.accent, fontSize: 26, fontWeight: '700' },
+  buttons: { width: '100%', alignItems: 'center', gap: 14 },
+  playButton: { backgroundColor: colors.primary, paddingVertical: 18, paddingHorizontal: 64, borderRadius: 32, minWidth: 220, alignItems: 'center' },
+  playButtonText: { color: colors.textPrimary, fontSize: 20, fontWeight: '800', letterSpacing: 2 },
+  secondaryButton: { paddingVertical: 12, paddingHorizontal: 32 },
+  secondaryButtonText: { color: colors.textSecondary, fontSize: 16, fontWeight: '600' },
+  adSlot: { width: '100%', minHeight: 50, paddingTop: 4, paddingBottom: 4 },
+});
