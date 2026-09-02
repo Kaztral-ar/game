@@ -6,6 +6,7 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "assetBundlePatterns": ["**/*"],
+    "owner": "kaztrals-team",
     "android": {
       "package": "com.kaztral.numberrush"
     },
