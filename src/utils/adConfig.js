@@ -4,7 +4,7 @@ import { TestIds } from 'react-native-google-mobile-ads';
 const PRODUCTION_IDS = {
   banner: 'ca-app-pub-6906509746436244/2220867988',
   interstitial: 'ca-app-pub-6906509746436244/9574895195',
-  rewarded: '',
+  rewarded: 'ca-app-pub-6906509746436244/6948731857',
 };
 
 export const AD_UNIT_IDS = __DEV__
@@ -13,10 +13,6 @@ export const AD_UNIT_IDS = __DEV__
       interstitial: TestIds.INTERSTITIAL,
       rewarded: TestIds.REWARDED,
     }
-  : {
-      banner: PRODUCTION_IDS.banner || TestIds.BANNER,
-      interstitial: PRODUCTION_IDS.interstitial || TestIds.INTERSTITIAL,
-      rewarded: PRODUCTION_IDS.rewarded || TestIds.REWARDED,
-    };
+  : PRODUCTION_IDS;
 
 export { PRODUCTION_IDS };
