@@ -1,37 +1,40 @@
 import mobileAds, { AdsConsent } from 'react-native-google-mobile-ads';
 
 let adsInitialized = false;
+let adsInitializationPromise = null;
 
 export async function initializeAdsWithConsent() {
-  try {
-    await AdsConsent.requestInfoUpdate();
-    await AdsConsent.loadAndShowConsentFormIfRequired();
+  if (adsInitialized) return true;
+  if (adsInitializationPromise) return adsInitializationPromise;
 
-    const consentInfo = await AdsConsent.getConsentInfo();
+  adsInitializationPromise = (async () => {
+    try {
+      await AdsConsent.requestInfoUpdate();
+      let consentInfo = await AdsConsent.getConsentInfo();
 
-    if (consentInfo.canRequestAds && !adsInitialized) {
+      if (consentInfo.isConsentFormAvailable && !consentInfo.canRequestAds) {
+        await AdsConsent.loadAndShowConsentFormIfRequired();
+        consentInfo = await AdsConsent.getConsentInfo();
+      }
+
+      if (!consentInfo.canRequestAds) {
+        console.warn('[AdMob] Ads cannot be requested yet:', consentInfo);
+        return false;
+      }
+
       await mobileAds().initialize();
       adsInitialized = true;
+      console.log('[AdMob] initialized successfully');
       return true;
-    }
-
-    return consentInfo.canRequestAds;
-  } catch (error) {
-    console.warn('[AdMob] consent flow failed', error);
-
-    try {
-      const consentInfo = await AdsConsent.getConsentInfo();
-      if (consentInfo.canRequestAds && !adsInitialized) {
-        await mobileAds().initialize();
-        adsInitialized = true;
-        return true;
-      }
-      return consentInfo.canRequestAds;
-    } catch (fallbackError) {
-      console.warn('[AdMob] consent fallback failed', fallbackError);
+    } catch (error) {
+      console.warn('[AdMob] initialization failed', error);
       return false;
+    } finally {
+      adsInitializationPromise = null;
     }
-  }
+  })();
+
+  return adsInitializationPromise;
 }
 
 export async function getPrivacyOptionsRequired() {
@@ -48,7 +51,9 @@ export async function getPrivacyOptionsRequired() {
 export async function showPrivacyOptions() {
   try {
     await AdsConsent.showPrivacyOptionsForm();
+    return true;
   } catch (error) {
     console.warn('[AdMob] privacy options failed', error);
+    return false;
   }
 }
