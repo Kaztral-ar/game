@@ -1,30 +1,36 @@
 import mobileAds, { AdsConsent } from 'react-native-google-mobile-ads';
 
+let adsInitialized = false;
+
 export async function initializeAdsWithConsent() {
   try {
     await AdsConsent.requestInfoUpdate();
-    const consentInfo = await AdsConsent.loadAndShowConsentFormIfRequired();
+    await AdsConsent.loadAndShowConsentFormIfRequired();
 
-    if (consentInfo.canRequestAds) {
+    const consentInfo = await AdsConsent.getConsentInfo();
+
+    if (consentInfo.canRequestAds && !adsInitialized) {
       await mobileAds().initialize();
+      adsInitialized = true;
       return true;
     }
 
-    return false;
+    return consentInfo.canRequestAds;
   } catch (error) {
     console.warn('[AdMob] consent flow failed', error);
 
     try {
       const consentInfo = await AdsConsent.getConsentInfo();
-      if (consentInfo.canRequestAds) {
+      if (consentInfo.canRequestAds && !adsInitialized) {
         await mobileAds().initialize();
+        adsInitialized = true;
         return true;
       }
+      return consentInfo.canRequestAds;
     } catch (fallbackError) {
       console.warn('[AdMob] consent fallback failed', fallbackError);
+      return false;
     }
-
-    return false;
   }
 }
 
