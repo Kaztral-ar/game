@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet, SafeAreaView, useWindowDimensions, Modal, BackHandler } from 'react-native';
+import { View, Text, Pressable, StyleSheet, SafeAreaView, useWindowDimensions, Modal, BackHandler, AppState } from 'react-native';
 import { Audio } from 'expo-av';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors } from '../theme/colors';
@@ -14,6 +14,7 @@ import Timer from '../components/Timer';
 const HEADER_HEIGHT = 84;
 const TICK_MS = 100;
 const WRONG_SOUND = 'https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg';
+const LOSE_SOUND = 'https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg';
 
 export default function GameScreen({ navigation }) {
   const { width } = useWindowDimensions();
@@ -31,43 +32,50 @@ export default function GameScreen({ navigation }) {
   const levelStartRef = useRef(Date.now());
   const endedRef = useRef(false);
   const wrongSoundRef = useRef(null);
+  const loseSoundRef = useRef(null);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        await Audio.setAudioModeAsync({ playsInSilentMode: true });
-        const { sound } = await Audio.Sound.createAsync({ uri: WRONG_SOUND }, { shouldPlay: false });
-        if (mounted) wrongSoundRef.current = sound;
-        else await sound.unloadAsync();
+        await Audio.setAudioModeAsync({ playsInSilentMode: true, staysActiveInBackground: false });
+        const [{ sound: wrongSound }, { sound: loseSound }] = await Promise.all([
+          Audio.Sound.createAsync({ uri: WRONG_SOUND }, { shouldPlay: false }),
+          Audio.Sound.createAsync({ uri: LOSE_SOUND }, { shouldPlay: false }),
+        ]);
+        if (mounted) {
+          wrongSoundRef.current = wrongSound;
+          loseSoundRef.current = loseSound;
+        } else {
+          await wrongSound.unloadAsync();
+          await loseSound.unloadAsync();
+        }
       } catch (e) {}
     })();
     return () => {
       mounted = false;
-      if (wrongSoundRef.current) {
-        wrongSoundRef.current.unloadAsync();
-        wrongSoundRef.current = null;
-      }
+      if (wrongSoundRef.current) { wrongSoundRef.current.unloadAsync(); wrongSoundRef.current = null; }
+      if (loseSoundRef.current) { loseSoundRef.current.unloadAsync(); loseSoundRef.current = null; }
     };
   }, []);
 
-  const playWrongSound = useCallback(async () => {
+  const playSound = useCallback(async (soundRef, volume = 1) => {
     try {
-      const sound = wrongSoundRef.current;
+      const sound = soundRef.current;
       if (!sound) return;
       await sound.setPositionAsync(0);
+      await sound.setVolumeAsync(volume);
       await sound.playAsync();
     } catch (e) {}
   }, []);
+  const playWrongSound = useCallback(() => playSound(wrongSoundRef, 0.8), [playSound]);
+  const playLoseSound = useCallback(() => playSound(loseSoundRef, 1), [playSound]);
 
   const numbers = useMemo(() => Array.from({ length: maxNumber }, (_, i) => i + 1), [maxNumber]);
-
-  // Pick the largest button size that allows the complete grid to fit on this screen.
   const buttonSize = useMemo(() => {
     if (!playArea.w || !playArea.h) return requestedButtonSize;
     const gap = Math.max(4, Math.min(8, Math.round(requestedButtonSize * 0.12)));
     let best = Math.min(requestedButtonSize, playArea.w, playArea.h);
-
     for (let columns = 1; columns <= maxNumber; columns++) {
       const rows = Math.ceil(maxNumber / columns);
       const sizeFromWidth = (playArea.w - Math.max(0, columns - 1) * gap) / columns;
@@ -79,16 +87,12 @@ export default function GameScreen({ navigation }) {
   }, [playArea, requestedButtonSize, maxNumber]);
 
   const shuffledOrder = useMemo(() => shuffle(numbers), [numbers, layoutSeed]);
-  const positions = useMemo(
-    () => playArea.w && playArea.h ? generateLayout(maxNumber, buttonSize, playArea.w, playArea.h) : [],
-    [maxNumber, buttonSize, playArea, layoutSeed]
-  );
+  const positions = useMemo(() => playArea.w && playArea.h ? generateLayout(maxNumber, buttonSize, playArea.w, playArea.h) : [], [maxNumber, buttonSize, playArea, layoutSeed]);
   const valueToPosition = useMemo(() => {
     const map = {};
     shuffledOrder.forEach((value, i) => { map[value] = positions[i]; });
     return map;
   }, [shuffledOrder, positions]);
-
   const decoyHighlight = useMemo(() => {
     const candidates = numbers.filter(n => n !== nextExpected);
     if (!candidates.length) return null;
@@ -97,7 +101,9 @@ export default function GameScreen({ navigation }) {
   }, [numbers, nextExpected, level, layoutSeed]);
 
   const resetLevelState = useCallback(() => {
+    clearInterval(intervalRef.current);
     endedRef.current = false;
+    setIsPaused(false);
     setNextExpected(1);
     setStatuses({});
     setElapsedMs(0);
@@ -106,7 +112,6 @@ export default function GameScreen({ navigation }) {
   }, []);
 
   useFocusEffect(useCallback(() => {
-    setIsPaused(false);
     const onBackPress = () => {
       if (endedRef.current) return true;
       setIsPaused(true);
@@ -116,14 +121,23 @@ export default function GameScreen({ navigation }) {
     return () => subscription.remove();
   }, []));
 
-  React.useEffect(() => {
-    if (isPaused || endedRef.current) return;
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', state => {
+      if (state !== 'active' && !endedRef.current) setIsPaused(true);
+    });
+    return () => subscription.remove();
+  }, []);
+
+  useEffect(() => {
+    if (isPaused || endedRef.current) {
+      clearInterval(intervalRef.current);
+      return undefined;
+    }
     intervalRef.current = setInterval(() => setElapsedMs(p => p + TICK_MS), TICK_MS);
     return () => clearInterval(intervalRef.current);
   }, [isPaused, layoutSeed]);
 
   const remainingMs = timeLimitMs != null ? Math.max(0, timeLimitMs - elapsedMs) : null;
-
   const endLevelSuccess = useCallback(() => {
     if (endedRef.current) return;
     endedRef.current = true;
@@ -132,15 +146,16 @@ export default function GameScreen({ navigation }) {
     navigation.replace('LevelComplete', { timeMs: elapsedMs, maxNumber });
   }, [completeLevel, navigation, elapsedMs, maxNumber, remainingMs]);
 
-  const endGame = useCallback(async (reason) => {
+  const endGame = useCallback(async reason => {
     if (endedRef.current) return;
     endedRef.current = true;
     clearInterval(intervalRef.current);
+    await playLoseSound();
     const { isNewBestScore, isNewBestLevel } = await saveRunResult({ score, level, bestLevelTimeMs: null });
     navigation.replace('GameOver', { finalScore: score, finalLevel: level, reason, isNewBestScore, isNewBestLevel });
-  }, [navigation, score, level]);
+  }, [navigation, score, level, playLoseSound]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (remainingMs === 0 && !endedRef.current) endGame('time');
   }, [remainingMs, endGame]);
 
@@ -160,7 +175,7 @@ export default function GameScreen({ navigation }) {
         const n = { ...p };
         delete n[value];
         return n;
-      }), 300);
+      }), 700);
       if (lives - 1 <= 0) endGame('lives');
     }
   }, [nextExpected, maxNumber, isPaused, registerCorrectTap, registerWrongTap, playWrongSound, endLevelSuccess, endGame, lives]);
@@ -172,12 +187,9 @@ export default function GameScreen({ navigation }) {
         <HeaderItem label="SCORE" value={score} />
         <View style={styles.headerItem}><Text style={styles.headerLabel}>TIME</Text><Timer elapsedMs={elapsedMs} remainingMs={remainingMs} /></View>
         <HeaderItem label="LIVES" value={'♥'.repeat(Math.max(lives, 0))} />
-        <Pressable style={styles.pauseButton} onPress={() => setIsPaused(true)} hitSlop={10}><Text style={styles.pauseIcon}>⏸</Text></Pressable>
+        <Pressable style={styles.pauseButton} onPress={() => !endedRef.current && setIsPaused(true)} hitSlop={10}><Text style={styles.pauseIcon}>⏸</Text></Pressable>
       </View>
-      <View style={styles.playArea} onLayout={e => {
-        const { width: w, height: h } = e.nativeEvent.layout;
-        setPlayArea({ w, h });
-      }}>
+      <View style={styles.playArea} onLayout={e => { const { width: w, height: h } = e.nativeEvent.layout; setPlayArea({ w, h }); }}>
         {numbers.map(value => {
           const pos = valueToPosition[value];
           if (!pos) return null;
@@ -185,13 +197,13 @@ export default function GameScreen({ navigation }) {
           return <NumberButton key={value} value={value} x={pos.x} y={pos.y} size={buttonSize} status={statuses[value] || 'idle'} decoy={isDecoy} onPress={handleTap} disabled={value < nextExpected} />;
         })}
       </View>
-      <Modal visible={isPaused} transparent animationType="fade">
+      <Modal visible={isPaused && !endedRef.current} transparent animationType="fade" onRequestClose={() => setIsPaused(false)}>
         <View style={styles.overlay}>
           <View style={styles.pauseCard}>
             <Text style={styles.pauseTitle}>Paused</Text>
             <Pressable style={styles.modalButton} onPress={() => setIsPaused(false)}><Text style={styles.modalButtonText}>Resume</Text></Pressable>
-            <Pressable style={[styles.modalButton, styles.modalButtonSecondary]} onPress={() => { setIsPaused(false); resetLevelState(); }}><Text style={styles.modalButtonText}>Restart Level</Text></Pressable>
-            <Pressable style={[styles.modalButton, styles.modalButtonSecondary]} onPress={() => { setIsPaused(false); navigation.replace('Home'); }}><Text style={styles.modalButtonText}>Quit to Home</Text></Pressable>
+            <Pressable style={[styles.modalButton, styles.modalButtonSecondary]} onPress={resetLevelState}><Text style={styles.modalButtonText}>Restart Level</Text></Pressable>
+            <Pressable style={[styles.modalButton, styles.modalButtonSecondary]} onPress={() => { setIsPaused(false); endedRef.current = true; clearInterval(intervalRef.current); navigation.replace('Home'); }}><Text style={styles.modalButtonText}>Quit to Home</Text></Pressable>
           </View>
         </View>
       </Modal>
@@ -199,9 +211,7 @@ export default function GameScreen({ navigation }) {
   );
 }
 
-function HeaderItem({ label, value }) {
-  return <View style={styles.headerItem}><Text style={styles.headerLabel}>{label}</Text><Text style={styles.headerValue}>{value}</Text></View>;
-}
+function HeaderItem({ label, value }) { return <View style={styles.headerItem}><Text style={styles.headerLabel}>{label}</Text><Text style={styles.headerValue}>{value}</Text></View>; }
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
